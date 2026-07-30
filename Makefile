@@ -2,10 +2,14 @@ MAKEFLAGS += --no-print-directory
 
 .DEFAULT_GOAL := help
 
-.PHONY: build clean fmt help setup test version
+.PHONY: build clean fmt help run setup test tui version
 
 BINARY_NAME := ttdaid
 CMD_PATH    := ./ttdaid/cmd/ttdaid
+
+DISTRO  ?= debian
+RELEASE ?= trixie
+
 VERSION := $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
 LDFLAGS := -s -w -X github.com/carlosrabelo/ttdaid/ttdaid/internal/version.Version=$(VERSION)
 
@@ -17,12 +21,19 @@ help: ## Show available targets
 	@grep -hE '^[a-zA-Z_-]+:.*## ' $(MAKEFILE_LIST) \
 		| sort \
 		| awk 'BEGIN {FS = ":.*## "} {printf "  %-15s %s\n", $$1, $$2}'
+	@echo ""
+	@echo "  DISTRO=$(DISTRO)  RELEASE=$(RELEASE)"
 
 setup: ## Download and tidy Go module dependencies
 	@./.make/setup.sh
 
 build: ## Build binary to bin/$(BINARY_NAME)
 	@./.make/build.sh
+
+run: tui ## Alias for tui
+
+tui: build ## Run the interactive checklist (Detect + Apply)
+	@./bin/$(BINARY_NAME) --distro $(DISTRO) --release $(RELEASE)
 
 test: ## Run tests
 	@./.make/test.sh
