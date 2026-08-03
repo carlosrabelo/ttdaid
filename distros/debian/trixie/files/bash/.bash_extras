@@ -1,0 +1,21 @@
+# =============================================================================
+# TTDAID — .bash_extras
+# Interactive extras; sourced from the ttdaid block in ~/.bashrc.
+# =============================================================================
+
+# --- Git prompt (Debian: package git) -----------------------------------------
+
+if [ -f /usr/lib/git-core/git-sh-prompt ]; then
+    # shellcheck source=/dev/null
+    . /usr/lib/git-core/git-sh-prompt
+elif [ -f /usr/share/git/git-prompt.sh ]; then
+    # shellcheck source=/dev/null
+    . /usr/share/git/git-prompt.sh
+fi
+
+# --- Prompt -------------------------------------------------------------------
+
+if declare -F __git_ps1 >/dev/null 2>&1; then
+    PS1='\[\e[0;92m\]\u\[\e[0;97m\]@\[\e[0;92m\]\h \[\e[0;93m\]\w\[\e[0;91m\]$(__git_ps1)\n\[\e[0;32m\]└─\[\e[0m\]\$ \[\e[0m\]'
+    export PS1
+fi
