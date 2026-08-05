@@ -1,9 +1,13 @@
 package catalog_test
 
 import (
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/carlosrabelo/ttdaid/ttdaid/internal/catalog"
+	"github.com/carlosrabelo/ttdaid/ttdaid/internal/rootfs"
 )
 
 func TestResolveComponentsEmpty(t *testing.T) {
@@ -96,6 +100,76 @@ func TestResolveSpecGroup(t *testing.T) {
 func TestResolveSpecUnknown(t *testing.T) {
 	if _, err := catalog.ResolveSpec("no-such-thing"); err == nil {
 		t.Fatal("expected error")
+	}
+}
+
+func TestDiscoverTrixie(t *testing.T) {
+	root, err := rootfs.Resolve()
+	if err != nil {
+		t.Fatal(err)
+	}
+	names, err := catalog.DiscoverComponents(root, "debian", "trixie")
+	if err != nil {
+		t.Fatal(err)
+	}
+	has := map[string]bool{}
+	for _, n := range names {
+		has[n] = true
+	}
+	if !has["containers-docker"] && !has["system-build-tools"] {
+		t.Fatalf("expected trixie scripts under %s, got %v", filepath.Join(root, "distros/debian/trixie/scripts"), names)
+	}
+	if has["lib"] {
+		t.Fatal("lib should not appear as component")
+	}
+	if has["system-bash"] {
+		t.Fatal("system-bash is always-run, not a checklist component")
+	}
+}
+
+func TestCatalogScriptParity(t *testing.T) {
+	root, err := rootfs.Resolve()
+	if err != nil {
+		t.Fatal(err)
+	}
+	dir := catalog.ScriptsDir(root, "debian", "trixie")
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	onDisk := map[string]bool{}
+	for _, e := range entries {
+		if e.IsDir() || !strings.HasSuffix(e.Name(), ".sh") {
+			continue
+		}
+		if _, skip := catalog.LibraryScripts[e.Name()]; skip {
+			continue
+		}
+		stem := strings.TrimSuffix(e.Name(), ".sh")
+		onDisk[stem] = true
+	}
+	for _, name := range catalog.AllComponents() {
+		if !onDisk[name] {
+			t.Errorf("catalog component %q has no script in %s", name, dir)
+		}
+	}
+	for name := range catalog.AlwaysRunScripts {
+		if !onDisk[name] {
+			t.Errorf("always-run %q has no script in %s", name, dir)
+		}
+	}
+	catalogued := map[string]bool{}
+	for _, name := range catalog.AllComponents() {
+		catalogued[name] = true
+	}
+	for name := range onDisk {
+		if catalogued[name] {
+			continue
+		}
+		if _, always := catalog.AlwaysRunScripts[name]; always {
+			continue
+		}
+		t.Errorf("script %q.sh is not in catalog Groups or AlwaysRunScripts", name)
 	}
 }
 
