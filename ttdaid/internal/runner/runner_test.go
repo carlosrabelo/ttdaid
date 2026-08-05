@@ -2,11 +2,11 @@ package runner_test
 
 import (
 	"context"
-	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/carlosrabelo/ttdaid/ttdaid/internal/rootfs"
 	"github.com/carlosrabelo/ttdaid/ttdaid/internal/runner"
 )
 
@@ -31,20 +31,14 @@ func TestRunComponentMissingScript(t *testing.T) {
 }
 
 func TestRunComponentCancelled(t *testing.T) {
-	root := t.TempDir()
-	scripts := filepath.Join(root, "distros", "debian", "trixie", "scripts")
-	if err := os.MkdirAll(scripts, 0o755); err != nil {
-		t.Fatal(err)
-	}
-	script := filepath.Join(scripts, "fixture-sleep.sh")
-	body := "#!/usr/bin/env bash\ninstall() { sleep 30; }\nuninstall() { :; }\ncase \"$1\" in install|uninstall) \"$1\" ;; *) exit 2 ;; esac\n"
-	if err := os.WriteFile(script, []byte(body), 0o755); err != nil {
+	root, err := rootfs.Resolve()
+	if err != nil {
 		t.Fatal(err)
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 	var buf strings.Builder
-	code := runner.RunComponent(ctx, root, "debian", "trixie", "fixture-sleep",
+	code := runner.RunComponent(ctx, root, "debian", "trixie", "system-build-tools",
 		"install", true, false, func(line string) { buf.WriteString(line) })
 	if code != runner.ExitCancelled {
 		t.Fatalf("exit %d, want %d; out=%s", code, runner.ExitCancelled, buf.String())
