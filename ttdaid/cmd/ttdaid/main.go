@@ -11,6 +11,7 @@ import (
 	"github.com/carlosrabelo/ttdaid/ttdaid/internal/catalog"
 	"github.com/carlosrabelo/ttdaid/ttdaid/internal/orchestrator"
 	"github.com/carlosrabelo/ttdaid/ttdaid/internal/rootfs"
+	"github.com/carlosrabelo/ttdaid/ttdaid/internal/tui"
 	"github.com/carlosrabelo/ttdaid/ttdaid/internal/version"
 )
 
@@ -22,11 +23,13 @@ func main() {
 	dryRun := flag.Bool("dry-run", false, "with --install/--uninstall: print actions only")
 	distro := flag.String("distro", "debian", "distribution tree under distros/")
 	release := flag.String("release", "trixie", "release/codename under distros/<distro>/")
+	// Legacy alias kept for existing Make targets / muscle memory.
 	debianVersion := flag.String("debian-version", "", "deprecated: use --release")
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage: %s [flags]\n\n", os.Args[0])
-		fmt.Fprintf(os.Stderr, "No install/uninstall flags → interactive TUI (not implemented yet).\n\n")
+		fmt.Fprintf(os.Stderr, "No install/uninstall flags → interactive TUI.\n\n")
 		fmt.Fprintf(os.Stderr, "Examples:\n")
+		fmt.Fprintf(os.Stderr, "  %s\n", os.Args[0])
 		fmt.Fprintf(os.Stderr, "  %s --list\n", os.Args[0])
 		fmt.Fprintf(os.Stderr, "  %s --install qemu,libvirt,sdl\n", os.Args[0])
 		fmt.Fprintf(os.Stderr, "  %s --install virt --dry-run\n", os.Args[0])
@@ -75,8 +78,10 @@ func main() {
 		os.Exit(code)
 	}
 
-	fmt.Fprintf(os.Stderr, "ttdaid: TUI not implemented yet; use --list / --install / --uninstall\n")
-	os.Exit(0)
+	code := tui.Run(*distro, rel, repoRoot)
+	if code != 0 {
+		os.Exit(code)
+	}
 }
 
 func printComponentList() error {
