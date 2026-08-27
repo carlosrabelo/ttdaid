@@ -1,37 +1,57 @@
 # TTDAID
 
-**Things To Do After Installing Debian** — for **Debian 13 (Trixie)** today; layout ready for more distros.
-
-Interactive Bubble Tea TUI that syncs a checklist of bash component scripts: detect what is already there, then Apply to install or remove.
+Interactive Bubble Tea checklist that installs and removes Debian component scripts after a fresh install (**Things To Do After Installing Debian**). Current tree is Debian 13 (Trixie); the layout is ready for more distros.
 
 ## Highlights
 
-- Checklist with Detect on open and one **Apply** (checked → install, unchecked → uninstall)
-- Apply asks **Y/N** when the plan includes uninstalls
+- Checklist with Detect on open and one Apply (checked → install, unchecked → uninstall)
+- Apply asks Y/N when the plan includes uninstalls
 - Groups: `system`, `editors`, `languages`, `gamedev`, `containers`, `desktop`, `ai`, `virt`, `ops`, `embedded`
-- Components are `distros/<distro>/<release>/scripts/<group>-<name>.sh` (`install` / `uninstall`)
+- Components are `ttdaid/distros/<distro>/<release>/scripts/<group>-<name>.sh` (`install` / `uninstall`)
 - No Snap — APT, official `.deb` repos, or Flatpak/Flathub
 - Dry-run Apply to preview without changing the system
 - Always-run bash setup keeps Debian’s stock `~/.bashrc` / `~/.profile` and only injects marked blocks
 
 ## Prerequisites
 
-- Debian 13 (Trixie) for the current component tree
-- Go 1.22+ (to build from source)
-- `sudo` for real Apply (`system-sudoers` or run `sudo -v` when prompted)
+- **Debian 13 (Trixie)** — current component tree
+- **Go 1.24+** — required to build from source; [download](https://go.dev/dl/)
+- **sudo** — required for a real Apply (`system-sudoers` or run `sudo -v` when prompted)
 
-## Quick start
+## Installation
+
+### Build from Source
 
 ```bash
 git clone https://github.com/carlosrabelo/ttdaid.git
 cd ttdaid
 make setup
+make build
+```
+
+Install to `~/.local/bin` (default), or system-wide to `/usr/local/bin` (sudo only for the copy):
+
+```bash
+make install
+make install-system
+make uninstall
+make uninstall-system
+```
+
+### Using Go Install
+
+```bash
+go install github.com/carlosrabelo/ttdaid/ttdaid/cmd/ttdaid@latest
+```
+
+## Quick Start
+
+```bash
+make build
 make tui
 ```
 
-Optional: `make install` → `~/.local/bin`; `make install-system` → `/usr/local/bin` (sudo only for the copy).
-
-## CLI
+## Usage
 
 Without action flags, `ttdaid` opens the TUI. You can also apply components directly:
 
@@ -45,7 +65,7 @@ ttdaid --uninstall qemu
 
 `--install` / `--uninstall` only touch the listed components (they do not wipe the rest of the checklist). Always-run bash setup still runs on every apply.
 
-## Keys
+### Keys
 
 | Key | Action |
 |-----|--------|
@@ -59,17 +79,18 @@ ttdaid --uninstall qemu
 | **↑/↓** / **j/k** | Move |
 | **Space** / **Enter** | Toggle |
 
-## Layout
+## Project Layout
 
 ```
-ttdaid/                              # Go sources (cmd/ + internal/)
-distros/debian/trixie/scripts/       # Component scripts (<group>-<name>.sh)
-distros/debian/trixie/files/bash/    # Snippets for ~/.bashrc, ~/.profile, …
-.make/                               # build, test, install
-go.mod
+ttdaid/cmd/ttdaid/                         # Go entry point
+ttdaid/internal/                           # Private packages
+ttdaid/distros/debian/trixie/scripts/      # Component scripts (<group>-<name>.sh)
+ttdaid/distros/debian/trixie/files/bash/   # Snippets for ~/.bashrc, ~/.profile, …
+bin/                                       # Compiled binaries (git-ignored)
+.make/                                     # Build and install scripts
 ```
 
-Future distros land beside Debian, e.g. `distros/ubuntu/noble/`.
+Future distros land beside Debian, e.g. `ttdaid/distros/ubuntu/noble/`.
 
 ### Bash policy (`system-bash`, always-run)
 
@@ -85,15 +106,19 @@ Not a TUI checklist item. Every Apply runs `system-bash` install (idempotent) to
 ## Development
 
 ```bash
-make setup      # go mod download/tidy
-make test
-make quality    # format, vet, test
-make build      # bin/ttdaid (embeds distros/)
-make tui        # DISTRO=debian RELEASE=trixie
+make setup               # Download and tidy Go module dependencies
+make build               # Compile binary to bin/ttdaid
+make test                # Run all tests
+make quality             # Format, vet, and lint
+make tui                 # DISTRO=debian RELEASE=trixie
+make install             # Install binary to ~/.local/bin
+make install-system      # Install binary to /usr/local/bin
+make uninstall           # Remove from ~/.local/bin
+make uninstall-system    # Remove from /usr/local/bin
 ```
 
 More detail: [docs/GUIDE.md](docs/GUIDE.md) · [docs/GUIDE-PT.md](docs/GUIDE-PT.md)
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+This project is licensed under the MIT License — see [LICENSE](LICENSE) for details.

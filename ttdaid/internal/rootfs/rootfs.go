@@ -10,7 +10,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/carlosrabelo/ttdaid"
+	"github.com/carlosrabelo/ttdaid/ttdaid"
 	"github.com/carlosrabelo/ttdaid/ttdaid/internal/version"
 )
 
@@ -28,8 +28,8 @@ func Resolve() (string, error) {
 		return resolved, nil
 	}
 	if env := os.Getenv("TTDAID_ROOT"); env != "" {
-		if hasDistros(env) {
-			resolved = env
+		if root, ok := locateDistrosParent(env); ok {
+			resolved = root
 			return resolved, nil
 		}
 		return "", fmt.Errorf("TTDAID_ROOT=%s has no distros/ tree", env)
@@ -51,6 +51,19 @@ func hasDistros(root string) bool {
 	return err == nil && st.IsDir()
 }
 
+// locateDistrosParent returns root if it contains distros/, or root/ttdaid
+// when the tree lives beside the Go sources.
+func locateDistrosParent(root string) (string, bool) {
+	if hasDistros(root) {
+		return root, true
+	}
+	nested := filepath.Join(root, "ttdaid")
+	if hasDistros(nested) {
+		return nested, true
+	}
+	return "", false
+}
+
 func findCheckout() (string, bool) {
 	candidates := []string{}
 	if wd, err := os.Getwd(); err == nil {
@@ -62,8 +75,8 @@ func findCheckout() (string, bool) {
 	for _, start := range candidates {
 		dir := start
 		for {
-			if hasDistros(dir) {
-				return dir, true
+			if root, ok := locateDistrosParent(dir); ok {
+				return root, true
 			}
 			parent := filepath.Dir(dir)
 			if parent == dir {

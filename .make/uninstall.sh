@@ -21,8 +21,7 @@ if [ -n "${PREFIX:-}" ]; then
 elif [ "${SYSTEM:-0}" = "1" ]; then
   targets+=("$SYSTEM_BIN")
 else
-  # Default: clear both common install locations.
-  targets+=("$USER_LOCAL" "$SYSTEM_BIN")
+  targets+=("$USER_LOCAL")
 fi
 
 removed=0

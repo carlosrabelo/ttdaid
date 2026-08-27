@@ -2,7 +2,7 @@ MAKEFLAGS += --no-print-directory
 
 .DEFAULT_GOAL := help
 
-.PHONY: build clean fmt help install install-system lint quality run setup shellcheck test tui uninstall version
+.PHONY: build clean fmt help install install-system lint quality run setup shellcheck test tui uninstall uninstall-system version
 
 # ---------------------------------------------------------------------------
 # Variables
@@ -42,7 +42,7 @@ help: ## Show available targets
 setup: ## Download and tidy Go module dependencies
 	@./.make/setup.sh
 
-build: ## Build binary to bin/$(BINARY_NAME)
+build: ## Build the binary
 	@./.make/build.sh
 
 run: tui ## Alias for tui
@@ -53,25 +53,28 @@ tui: build ## Run the interactive checklist (Detect + Apply)
 test: ## Run tests
 	@./.make/test.sh
 
-fmt: ## Format Go sources
+fmt: ## Format code
 	@go fmt ./...
 
-lint: ## Run go vet
+lint: ## Run linter
 	@go vet ./...
 
-quality: fmt lint test ## Format, vet, and test
+quality: fmt lint ## Run all quality checks
 
 version: ## Show build version
 	@echo "$(VERSION)"
 
-install: build ## Build as user, install to ~/.local/bin
+install: ## Install to ~/.local/bin (requires prior make build)
 	@./.make/install.sh
 
-install-system: build ## Build as user, install to /usr/local/bin (sudo only for copy)
+install-system: ## Install to /usr/local/bin (requires prior make build; sudo only for copy)
 	@SYSTEM=1 ./.make/install.sh
 
-uninstall: ## Remove from ~/.local/bin and /usr/local/bin (sudo only if needed)
+uninstall: ## Remove from ~/.local/bin (sudo only if needed)
 	@./.make/uninstall.sh
+
+uninstall-system: ## Remove from /usr/local/bin (sudo only if needed)
+	@SYSTEM=1 ./.make/uninstall.sh
 
 clean: ## Remove build artifacts
 	@./.make/clean.sh

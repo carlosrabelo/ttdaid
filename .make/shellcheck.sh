@@ -11,5 +11,5 @@ fi
 
 echo "Running shellcheck..."
 shellcheck -e SC1091 -e SC2155 -e SC2232 -e SC2016 -e SC2059 \
-  .make/*.sh distros/*/*/scripts/*.sh
+  .make/*.sh ttdaid/distros/*/*/scripts/*.sh
 echo "shellcheck OK"

@@ -1,54 +1,74 @@
 # TTDAID
 
-**Things To Do After Installing Debian** — hoje para **Debian 13 (Trixie)**; layout preparado para mais distros.
-
-TUI Bubble Tea que sincroniza um checklist de scripts bash de componentes: detecta o que já existe e faz Apply para instalar ou remover.
+Checklist interativo Bubble Tea que instala e remove scripts de componentes Debian após uma instalação nova (**Things To Do After Installing Debian**). A árvore atual é Debian 13 (Trixie); o layout já admite mais distros.
 
 ## Destaques
 
-- Checklist com Detect na abertura e um único **Apply** (marcado → instala, desmarcado → remove)
-- Apply pede **Y/N** quando o plano inclui uninstalls
+- Checklist com Detect na abertura e um único Apply (marcado → instala, desmarcado → remove)
+- Apply pede Y/N quando o plano inclui uninstalls
 - Grupos: `system`, `editors`, `languages`, `gamedev`, `containers`, `desktop`, `ai`, `virt`, `ops`, `embedded`
-- Componentes em `distros/<distro>/<release>/scripts/<grupo>-<nome>.sh` (`install` / `uninstall`)
+- Componentes em `ttdaid/distros/<distro>/<release>/scripts/<grupo>-<nome>.sh` (`install` / `uninstall`)
 - Sem Snap — APT, repositórios `.deb` oficiais ou Flatpak/Flathub
 - Dry-run Apply para pré-visualizar sem alterar o sistema
-- Setup bash always-run mantém o `~/.bashrc` / `~/.profile` stock e só injeta blocos marcados
+- Setup bash always-run mantém o `~/.bashrc` / `~/.profile` stock do Debian e só injeta blocos marcados
 
 ## Pré-requisitos
 
-- Debian 13 (Trixie) para a árvore de componentes atual
-- Go 1.22+ (para compilar a partir do código)
-- `sudo` para Apply real (`system-sudoers` ou `sudo -v` quando pedido)
+- **Debian 13 (Trixie)** — árvore de componentes atual
+- **Go 1.24+** — necessário para compilar a partir do código; [download](https://go.dev/dl/)
+- **sudo** — necessário para Apply real (`system-sudoers` ou `sudo -v` quando pedido)
 
-## Início rápido
+## Instalação
+
+### Compilar a partir do código
 
 ```bash
 git clone https://github.com/carlosrabelo/ttdaid.git
 cd ttdaid
 make setup
+make build
+```
+
+Instala em `~/.local/bin` (padrão), ou em `/usr/local/bin` no sistema (sudo só na cópia):
+
+```bash
+make install
+make install-system
+make uninstall
+make uninstall-system
+```
+
+### Via go install
+
+```bash
+go install github.com/carlosrabelo/ttdaid/ttdaid/cmd/ttdaid@latest
+```
+
+## Início Rápido
+
+```bash
+make build
 make tui
 ```
 
-Opcional: `make install` → `~/.local/bin`; `make install-system` → `/usr/local/bin` (sudo só na cópia).
-
-## CLI
+## Uso
 
 Sem flags de ação, `ttdaid` abre a TUI. Também dá para aplicar componentes direto:
 
 ```bash
-ttdaid --list                              # nomes curtos + completos
-ttdaid --install qemu,libvirt,sdl          # nomes curtos
-ttdaid --install virt                      # grupo inteiro
+ttdaid --list                              # short + full names
+ttdaid --install qemu,libvirt,sdl          # short names
+ttdaid --install virt                      # whole group
 ttdaid --install virt-qemu --dry-run
 ttdaid --uninstall qemu
 ```
 
 `--install` / `--uninstall` só mexem nos componentes listados (não limpam o resto do checklist). O always-run do bash ainda roda em todo apply.
 
-## Teclas
+### Teclas
 
 | Tecla | Ação |
-|-------|------|
+|-----|--------|
 | **D** | Detect |
 | **A** | Apply (Y/N se houver uninstalls) |
 | **R** | Dry-run |
@@ -59,17 +79,18 @@ ttdaid --uninstall qemu
 | **↑/↓** / **j/k** | Mover |
 | **Espaço** / **Enter** | Alternar |
 
-## Estrutura
+## Estrutura do Projeto
 
 ```
-ttdaid/                              # Código Go (cmd/ + internal/)
-distros/debian/trixie/scripts/       # Scripts de componente (<grupo>-<nome>.sh)
-distros/debian/trixie/files/bash/    # Snippets para ~/.bashrc, ~/.profile, …
-.make/                               # build, test, install
-go.mod
+ttdaid/cmd/ttdaid/                         # ponto de entrada Go
+ttdaid/internal/                           # pacotes privados
+ttdaid/distros/debian/trixie/scripts/      # scripts de componente (<grupo>-<nome>.sh)
+ttdaid/distros/debian/trixie/files/bash/   # snippets para ~/.bashrc, ~/.profile, …
+bin/                                       # binários compilados (git-ignored)
+.make/                                     # scripts de build e install
 ```
 
-Distros futuras ficam ao lado, ex.: `distros/ubuntu/noble/`.
+Distros futuras ficam ao lado do Debian, ex.: `ttdaid/distros/ubuntu/noble/`.
 
 ### Política bash (`system-bash`, always-run)
 
@@ -85,15 +106,19 @@ Não é item do checklist da TUI. Cada Apply executa o `install` de `system-bash
 ## Desenvolvimento
 
 ```bash
-make setup      # go mod download/tidy
-make test
-make quality    # format, vet, test
-make build      # bin/ttdaid (embute distros/)
-make tui        # DISTRO=debian RELEASE=trixie
+make setup               # Download and tidy Go module dependencies
+make build               # Compile binary to bin/ttdaid
+make test                # Run all tests
+make quality             # Format, vet, and lint
+make tui                 # DISTRO=debian RELEASE=trixie
+make install             # Install binary to ~/.local/bin
+make install-system      # Install binary to /usr/local/bin
+make uninstall           # Remove from ~/.local/bin
+make uninstall-system    # Remove from /usr/local/bin
 ```
 
 Mais detalhes: [docs/GUIDE-PT.md](docs/GUIDE-PT.md) · [docs/GUIDE.md](docs/GUIDE.md)
 
 ## Licença
 
-MIT — veja [LICENSE](LICENSE).
+Este projeto está licenciado sob a MIT License — veja [LICENSE](LICENSE) para detalhes.

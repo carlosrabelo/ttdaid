@@ -8,10 +8,11 @@
 | `make build` | Compila `bin/ttdaid` |
 | `make tui` | Abre o checklist Bubble Tea (Detect + Apply) |
 | `make test` | Roda `go test ./...` |
-| `make quality` | Formata, vet e testa |
-| `make install` | Build como usuário, instala em `~/.local/bin` |
-| `make install-system` | Build como usuário, copia para `/usr/local/bin` (sudo só no install) |
-| `make uninstall` | Remove de `~/.local/bin` e `/usr/local/bin` |
+| `make quality` | Formata e faz vet |
+| `make install` | Instala em `~/.local/bin` (requer `make build` antes) |
+| `make install-system` | Copia para `/usr/local/bin` (requer `make build` antes; sudo só na cópia) |
+| `make uninstall` | Remove de `~/.local/bin` |
+| `make uninstall-system` | Remove de `/usr/local/bin` |
 | `make help` | Mostra resumo de uso |
 
 Entrypoint do produto é `bin/ttdaid`: sem flags → TUI; `--install` / `--uninstall` → Apply headless. Não há path remoto SSH nem targets Make de install/uninstall de componentes (use o binário ou a TUI).
@@ -20,8 +21,8 @@ Entrypoint do produto é `bin/ttdaid`: sem flags → TUI; `--install` / `--unins
 
 | Variável | Padrão | Descrição |
 |----------|--------|-----------|
-| `DISTRO` | `debian` | Distribuição sob `distros/` |
-| `RELEASE` | `trixie` | Release/codinome sob `distros/<distro>/` |
+| `DISTRO` | `debian` | Distribuição sob `ttdaid/distros/` |
+| `RELEASE` | `trixie` | Release/codinome sob `ttdaid/distros/<distro>/` |
 | `DEBIAN_VERSION` | — | Alias legado de `RELEASE` |
 
 ## Como a TUI funciona
@@ -40,18 +41,18 @@ Fonte do catálogo: `ttdaid/internal/catalog`.
 
 ## Scripts de componente
 
-Cada componente é `distros/debian/trixie/scripts/<grupo>-<nome>.sh` com `install` / `uninstall`. Direto se precisar:
+Cada componente é `ttdaid/distros/debian/trixie/scripts/<grupo>-<nome>.sh` com `install` / `uninstall`. Direto se precisar:
 
 ```bash
-sudo bash distros/debian/trixie/scripts/containers-docker.sh install
-DRY_RUN=true sudo bash distros/debian/trixie/scripts/languages-node.sh install
+sudo bash ttdaid/distros/debian/trixie/scripts/containers-docker.sh install
+DRY_RUN=true sudo bash ttdaid/distros/debian/trixie/scripts/languages-node.sh install
 ```
 
 ## Dotfiles bash (`system-bash`, always-run)
 
 Não é componente do checklist. O Apply sempre roda `install` neste script para manter PATH/aliases injetados.
 
-Os templates em `distros/debian/trixie/files/bash/` são **snippets**, não substitutos completos.
+Os templates em `ttdaid/distros/debian/trixie/files/bash/` são **snippets**, não substitutos completos.
 
 1. Se faltar `~/.bashrc` / `~/.profile` → copia de `/etc/skel` primeiro.
 2. Só injeta/atualiza blocos marcados (`# >>> ttdaid … start >>>` … `end <<<`).
